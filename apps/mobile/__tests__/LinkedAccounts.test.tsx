@@ -86,7 +86,7 @@ describe('the accounts for sign-in', () => {
       ...accounts(['vk']),
       'POST /auth/oauth/vk/link-start': async (request) => {
         sent = await request.json();
-        return json({ url: 'http://10.0.2.2:3000/auth/oauth/vk/start?client=mobile&intent=x' });
+        return json({ url: 'https://api.kotgambit.ru/auth/oauth/vk/start?client=mobile&intent=x' });
       },
     });
     render(<App store={makeStore()} />);
@@ -95,7 +95,7 @@ describe('the accounts for sign-in', () => {
 
     await waitFor(() =>
       expect(open).toHaveBeenCalledWith(
-        'http://10.0.2.2:3000/auth/oauth/vk/start?client=mobile&intent=x',
+        'https://api.kotgambit.ru/auth/oauth/vk/start?client=mobile&intent=x',
       ),
     );
     expect(sent).toEqual({ client: 'mobile' });

@@ -79,8 +79,10 @@ pnpm --filter @kotgambit/mobile dev        # Metro
 pnpm --filter @kotgambit/mobile android    # сборка и запуск на устройстве или эмуляторе
 ```
 
-Нужны Android SDK и эмулятор. В режиме разработки приложение ходит к API по адресу
-`http://10.0.2.2:3000`, так эмулятор Android видит компьютер, на котором запущен API.
+Нужны Android SDK и эмулятор. Приложение ходит к рабочему API `https://api.kotgambit.ru`,
+локальный сервер не нужен. Чтобы проверить локальный API, поменяй `API_URL` и `WEB_URL` в
+`apps/mobile/src/app/api.ts` на `http://10.0.2.2:3000` и `http://10.0.2.2:5173`: так эмулятор
+Android видит компьютер, на котором запущен API.
 
 ## Проверки
 

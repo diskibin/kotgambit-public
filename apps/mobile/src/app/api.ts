@@ -9,12 +9,12 @@ import {
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { getRefreshToken, saveRefreshToken } from './refreshTokenStorage';
 
-// 10.0.2.2 is how the Android emulator reaches the host machine; release builds get their URL
-// together with the release configuration.
-export const API_URL = 'http://10.0.2.2:3000';
+// The app talks to the production server even in debug builds, so a device or emulator needs no
+// local API. To try a local one, use http://10.0.2.2:3000 (how the emulator reaches the host).
+export const API_URL = 'https://api.kotgambit.ru';
 
-// The site, where the documents (the offer and the privacy policy) are read. The same address for the emulator.
-export const WEB_URL = 'http://10.0.2.2:5173';
+// The site, where the documents (the offer and the privacy policy) are read.
+export const WEB_URL = 'https://kotgambit.ru';
 
 /**
  * The api is created before the store, but the session lives in the store.

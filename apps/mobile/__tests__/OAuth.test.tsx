@@ -60,7 +60,9 @@ describe('the buttons', () => {
     mockApi(anonymous(['yandex']));
     await openSignIn();
     fireEvent.press(await screen.findByRole('button', { name: 'Войти через Яндекс' }));
-    expect(open).toHaveBeenCalledWith('http://10.0.2.2:3000/auth/oauth/yandex/start?client=mobile');
+    expect(open).toHaveBeenCalledWith(
+      'https://api.kotgambit.ru/auth/oauth/yandex/start?client=mobile',
+    );
   });
 });
 
@@ -107,7 +109,7 @@ describe('the way back from the browser', () => {
 
     open.mockClear();
     fireEvent.press(screen.getByRole('button', { name: 'Открыть браузер снова' }));
-    expect(open).toHaveBeenCalledWith('http://10.0.2.2:3000/auth/oauth/vk/start?client=mobile');
+    expect(open).toHaveBeenCalledWith('https://api.kotgambit.ru/auth/oauth/vk/start?client=mobile');
   });
 
   it('says calmly that the code did not work and goes back to the sign-in', async () => {

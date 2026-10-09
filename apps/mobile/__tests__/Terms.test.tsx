@@ -23,8 +23,8 @@ describe('the documents', () => {
     fireEvent.press(await screen.findByRole('button', { name: 'У меня уже есть аккаунт' }));
 
     fireEvent.press(await screen.findByText('оферту'));
-    expect(open).toHaveBeenLastCalledWith('http://10.0.2.2:5173/offer');
+    expect(open).toHaveBeenLastCalledWith('https://kotgambit.ru/offer');
     fireEvent.press(screen.getByText('политику конфиденциальности'));
-    expect(open).toHaveBeenLastCalledWith('http://10.0.2.2:5173/privacy');
+    expect(open).toHaveBeenLastCalledWith('https://kotgambit.ru/privacy');
   });
 });
