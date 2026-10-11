@@ -1,6 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Haptic feedback on answers (Vibration in useHaptics); a normal permission, no prompt -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- react-native-keychain declares them for biometric protection of secrets. The tokens are
+         stored without access control, so the stores need not hear about biometrics at all. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
 
     <!-- Android 11 and later: without this the app cannot see which banking apps are installed,
          and the payment pages cannot open them (PLAN.md 6.8). The schemes of the banks and of the SBP
