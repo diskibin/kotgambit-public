@@ -163,6 +163,12 @@ describe('the profile', () => {
     ).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Повторить' })).toBeOnTheScreen();
   });
+
+  it('keeps the way to Premium at the top, even when the profile cannot load', async () => {
+    await openProfile({ 'GET /profile': () => new Response(null, { status: 500 }) });
+    await screen.findByText('Не получилось загрузить профиль. Попробуй ещё раз.');
+    expect(screen.getByRole('button', { name: 'Премиум' })).toBeOnTheScreen();
+  });
 });
 
 describe('the wardrobe', () => {

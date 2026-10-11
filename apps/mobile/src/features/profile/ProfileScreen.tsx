@@ -83,6 +83,9 @@ export function ProfileScreen({
         </IconButton>
       </View>
 
+      {/* At the top and outside the loaded data: it is the only way to Premium, it must not wait for the profile */}
+      <Button variant="premium" label={t('premium.title')} onPress={onPremium} />
+
       {profile.isError && (
         <View style={{ gap: space[2] }}>
           <Banner>{t('profile.loadError')}</Banner>
@@ -365,7 +368,6 @@ export function ProfileScreen({
           <WardrobeRow wardrobe={data.wardrobe} />
           <LinkedAccounts />
 
-          <Button variant="premium" label={t('premium.title')} onPress={onPremium} />
           <Button variant="secondary" label={t('path.signOut')} onPress={() => void signOut()} />
         </>
       )}
