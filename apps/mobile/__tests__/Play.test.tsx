@@ -250,6 +250,13 @@ describe('a busy engine', () => {
 });
 
 describe('the end of a game', () => {
+  it('leaves at once with the cross, without asking to give up', async () => {
+    await openGame();
+    await press('К выбору соперника');
+    expect(await screen.findByRole('header', { name: 'Играть' })).toBeOnTheScreen();
+    expect(screen.queryByRole('header', { name: 'Сдаться?' })).not.toBeOnTheScreen();
+  });
+
   it('asks before giving up, and the safe answer is the main one', async () => {
     await openGame();
     await press('Сдаться');

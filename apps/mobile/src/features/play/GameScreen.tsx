@@ -175,17 +175,17 @@ function GamePlay({
   const { phase, hint: shownHint, resignOpen } = session;
   const over = phase === 'over';
 
-  // The system Back button asks before giving up, like the arrow in the header
+  // Back and the cross only leave: the game stays on the server and can be resumed from the bots
+  // list. Giving up is the "Сдаться" button.
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (movesOpen) setMovesOpen(false);
       else if (resignOpen) dispatch({ type: 'game/resignCancelled' });
-      else if (over) onClose();
-      else dispatch({ type: 'game/resignAsked' });
+      else onClose();
       return true;
     });
     return () => subscription.remove();
-  }, [movesOpen, resignOpen, over, dispatch, onClose]);
+  }, [movesOpen, resignOpen, dispatch, onClose]);
 
   /** After a failed request the server may or may not have taken it: its copy of the game is the truth. */
   async function resync() {
@@ -355,11 +355,7 @@ function GamePlay({
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
-          <IconButton
-            quiet
-            label={t('play.game.close')}
-            onPress={() => (over ? onClose() : dispatch({ type: 'game/resignAsked' }))}
-          >
+          <IconButton quiet label={t('play.game.close')} onPress={onClose}>
             <CloseIcon color={colors.text} />
           </IconButton>
           <BotAvatar kind={bot.kind} size={HEADER_AVATAR} />
