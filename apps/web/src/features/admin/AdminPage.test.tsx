@@ -18,6 +18,7 @@ const FREE = {
 const STATS = {
   days: 30,
   funnel: { visitors: 200, signedIn: 80, premiumView: 20, checkoutStart: 5, paid: 2 },
+  appFunnel: { visitors: 50, signedIn: 30, premiumView: 10, checkoutStart: 4, paid: 1 },
   daily: [
     { day: '2026-10-05', visitors: 6, registrations: 1, payments: 0, revenueKopecks: 0 },
     { day: '2026-10-06', visitors: 10, registrations: 3, payments: 1, revenueKopecks: 29_900 },
@@ -95,6 +96,25 @@ describe('the admin page', () => {
     expect(within(funnel).getByText(/^40% от зашедших/)).toBeInTheDocument();
     expect(within(funnel).getAllByText(/25% от прошлого шага/)).toHaveLength(2);
     expect(requested).toEqual(['30']);
+  });
+
+  it('shows the funnel of the app next to the one of the site', async () => {
+    server.use(http.get(`${API_URL}/admin/stats`, () => HttpResponse.json(STATS)));
+    renderApp('/admin');
+    const funnel = (await screen.findByRole('heading', { name: 'Воронка приложения' })).closest(
+      'section',
+    ) as HTMLElement;
+
+    expect(within(funnel).getByRole('progressbar', { name: 'Открыли приложение' })).toHaveAttribute(
+      'aria-valuenow',
+      '50',
+    );
+    expect(within(funnel).getByRole('progressbar', { name: 'Оплатили' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+    // 30 of 50 who opened the app
+    expect(within(funnel).getByText(/^60% от открывших/)).toBeInTheDocument();
   });
 
   it('shows the people, the premium and the money', async () => {

@@ -20,18 +20,20 @@ const USAGE_KEYS = [
   'reviewsDone',
 ] as const;
 
-function Funnel({ stats }: { stats: AdminStats }) {
+/** The steps of one client: the site and the app have a funnel each, with the same steps and their own words. */
+function Funnel({ stats, client }: { stats: AdminStats; client: 'funnel' | 'appFunnel' }) {
   const { t } = useTranslation();
+  const counts = stats[client];
   return (
-    <Section title={t('admin.funnel.title')}>
-      <Caption>{t('admin.funnel.caption')}</Caption>
+    <Section title={t(`admin.${client}.title`)}>
+      <Caption>{t(`admin.${client}.caption`)}</Caption>
       <FunnelBars
         steps={FUNNEL_STEPS.map((key) => ({
           key,
-          label: t(`admin.funnel.steps.${key}`),
-          value: stats.funnel[key],
+          label: t(`admin.${client}.steps.${key}`),
+          value: counts[key],
         }))}
-        shareText={(percent) => t('admin.funnel.share', { percent })}
+        shareText={(percent) => t(`admin.${client}.share`, { percent })}
       />
     </Section>
   );
@@ -180,7 +182,8 @@ function Usage({ stats }: { stats: AdminStats }) {
 export function OverviewTab({ stats }: { stats: AdminStats }) {
   return (
     <div className="grid items-start gap-6 laptop:grid-cols-2">
-      <Funnel stats={stats} />
+      <Funnel stats={stats} client="funnel" />
+      <Funnel stats={stats} client="appFunnel" />
       <Chart stats={stats} />
       <Users stats={stats} />
       <Premium stats={stats} />

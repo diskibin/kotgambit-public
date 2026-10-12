@@ -19,6 +19,7 @@ const ID = '3f8b9c1e-8a56-4b52-9d6a-0c1c6e1f7a11';
 const OVERVIEW = {
   days: 30,
   funnel: { visitors: 10, signedIn: 5, premiumView: 2, checkoutStart: 1, paid: 1 },
+  appFunnel: { visitors: 4, signedIn: 3, premiumView: 1, checkoutStart: 0, paid: 0 },
   daily: [{ day: '2026-10-06', visitors: 10, registrations: 1, payments: 0, revenueKopecks: 0 }],
   users: { total: 5, registered: 1, dau: 1, wau: 2, mau: 3 },
   premium: {
