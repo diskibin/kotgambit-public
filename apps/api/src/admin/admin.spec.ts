@@ -59,11 +59,16 @@ describe('analytics and the admin page', () => {
     return { token: body.accessToken, id: body.user.id };
   }
 
-  const event = (name: string, visitorId: string = randomUUID(), detail?: string) =>
+  const event = (
+    name: string,
+    visitorId: string = randomUUID(),
+    detail?: string,
+    source?: string,
+  ) =>
     app.inject({
       method: 'POST',
       url: '/analytics/events',
-      payload: { visitorId, name, ...(detail ? { detail } : {}) },
+      payload: { visitorId, name, ...(detail ? { detail } : {}), ...(source ? { source } : {}) },
     });
 
   const stats = (token: string | null, days?: number) =>
@@ -81,6 +86,14 @@ describe('analytics and the admin page', () => {
       const rows = await prisma.analyticsEvent.findMany();
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({ visitorId, name: 'premium_view' });
+    });
+
+    it('takes a step with no source for the site, and keeps the app as its own', async () => {
+      expect((await event('visit')).statusCode).toBe(204);
+      expect((await event('visit', randomUUID(), undefined, 'app')).statusCode).toBe(204);
+      expect((await event('visit', randomUUID(), undefined, 'tv')).statusCode).toBe(400);
+      const rows = await prisma.analyticsEvent.findMany({ orderBy: { createdAt: 'asc' } });
+      expect(rows.map((row) => row.source)).toEqual(['web', 'app']);
     });
 
     it('keeps which hint about Premium was shown, and only for the events about hints', async () => {
@@ -227,6 +240,46 @@ describe('analytics and the admin page', () => {
 
       const long = AdminStatsSchema.parse((await stats(token, 90)).json());
       expect(long.funnel.visitors).toBe(3);
+    });
+
+    it('counts the funnel of the app apart from the funnel of the site', async () => {
+      const { token, id } = await register(OWNER);
+      const phone = randomUUID();
+      const browser = randomUUID();
+      for (const name of ['visit', 'signed_in', 'premium_view', 'checkout_start']) {
+        await event(name, phone, undefined, 'app');
+      }
+      await event('visit', browser);
+      // The same person in the browser and in the app is two visitors: the ids are not tied to anybody
+      await event('visit', phone);
+      await prisma.payment.create({
+        data: {
+          userId: id,
+          planKey: 'month',
+          purpose: 'initial',
+          status: 'succeeded',
+          amountKopecks: 29_900,
+          idempotencyKey: randomUUID(),
+          client: 'mobile',
+          paidAt: new Date(),
+        },
+      });
+
+      const body = AdminStatsSchema.parse((await stats(token, 7)).json());
+      expect(body.appFunnel).toEqual({
+        visitors: 1,
+        signedIn: 1,
+        premiumView: 1,
+        checkoutStart: 1,
+        paid: 1,
+      });
+      expect(body.funnel).toEqual({
+        visitors: 2,
+        signedIn: 0,
+        premiumView: 0,
+        checkoutStart: 0,
+        paid: 0,
+      });
     });
 
     it('counts the visitors who saw a hint about Premium and who pressed it, each once', async () => {

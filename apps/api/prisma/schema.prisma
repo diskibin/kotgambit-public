@@ -466,6 +466,8 @@ model AnalyticsEvent {
   name      AnalyticsEventName
   // Which hint about Premium, for `nudge_view` and `nudge_click` only
   detail    String?
+  // 'web' or 'app': the site and the app have a funnel of their own. Old rows are the site's.
+  source    String             @default("web")
   createdAt DateTime           @default(now()) @map("created_at")
 
   // The funnel counts distinct visitors of one kind of step in a period

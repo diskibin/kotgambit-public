@@ -17,6 +17,14 @@ describe('analytics contracts', () => {
     ).toBe(false);
   });
 
+  it('takes a step without a source for the site, and only the site or the app', () => {
+    const parse = (event: object) =>
+      AnalyticsEventRequestSchema.safeParse({ visitorId: ID, name: 'visit', ...event });
+    expect(parse({})).toMatchObject({ success: true, data: { source: 'web' } });
+    expect(parse({ source: 'app' })).toMatchObject({ success: true, data: { source: 'app' } });
+    expect(parse({ source: 'tv' }).success).toBe(false);
+  });
+
   it('wants the kind of hint with the events about hints, and with them only', () => {
     const parse = (event: object) =>
       AnalyticsEventRequestSchema.safeParse({ visitorId: ID, ...event }).success;

@@ -1035,6 +1035,7 @@ describe('analytics and the admin page', () => {
         url = request.url;
         const zero = {
           funnel: { visitors: 5, signedIn: 3, premiumView: 2, checkoutStart: 1, paid: 1 },
+          appFunnel: { visitors: 2, signedIn: 1, premiumView: 1, checkoutStart: 0, paid: 0 },
           daily: [
             {
               day: '2026-10-06',
