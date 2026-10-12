@@ -105,9 +105,11 @@ export function PuzzleScreen({
   if (load === 'ready' && puzzle) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+        {/* Wraps instead of running off the right edge on a narrow screen or at a large text scale */}
         <View
           style={{
             flexDirection: 'row',
+            flexWrap: 'wrap',
             alignItems: 'center',
             gap: space[2],
             paddingHorizontal: screenPadding,
@@ -117,13 +119,13 @@ export function PuzzleScreen({
             <CloseIcon color={colors.text} />
           </IconButton>
           {request.mode === 'theme' && puzzle.themes[0] && (
-            <View style={pill(colors.surface2)}>
-              <Text style={[typography.small, { color: colors.text }]}>
+            <View style={[pill(colors.surface2), { flexShrink: 1 }]}>
+              <Text numberOfLines={1} style={[typography.small, { color: colors.text }]}>
                 {puzzle.themes[0].title}
               </Text>
             </View>
           )}
-          <View style={{ flex: 1 }} />
+          <View style={{ flexGrow: 1, flexBasis: 0 }} />
           {stats.data && stats.data.streak > 0 && (
             <View style={pill(colors.mintTint)}>
               <Text style={[typography.small, { color: colors.mintText }]}>
