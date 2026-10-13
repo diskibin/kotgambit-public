@@ -130,6 +130,7 @@ export class BillingService implements OnApplicationBootstrap, OnModuleDestroy {
         idempotencyKey: randomUUID(),
         client: request.client,
         autoRenewConsent: request.autoRenew,
+        autoRenewConsentText: request.autoRenew ? (request.consentText ?? null) : null,
       },
     });
     try {

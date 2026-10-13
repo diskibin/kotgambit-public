@@ -9,7 +9,7 @@ describe('the offer', () => {
     expect(
       await screen.findByRole('heading', { name: 'Публичная оферта', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Редакция от 5 октября 2026 года')).toBeInTheDocument();
+    expect(screen.getByText('Редакция от 14 октября 2026 года')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '1. Общие положения' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: '6. Автопродление и отмена подписки' }),

@@ -23,6 +23,7 @@ import {
 import { notificationPaymentId } from './yookassa.provider.js';
 
 const MS_IN_DAY = 24 * 60 * 60 * 1000;
+const CONSENT = 'Я согласен на автоматические списания согласно условиям оферты';
 
 /** A provider that is told by the test what the learner did on the payment page. */
 class FakeProvider implements PaymentProvider {
@@ -144,7 +145,12 @@ describe('billing', () => {
     });
 
   const checkout = async (plan: 'month' | 'year' = 'month', autoRenew = true, as = token) => {
-    const res = await call('POST', '/billing/checkout', { plan, client: 'web', autoRenew }, as);
+    const res = await call(
+      'POST',
+      '/billing/checkout',
+      { plan, client: 'web', autoRenew, ...(autoRenew ? { consentText: CONSENT } : {}) },
+      as,
+    );
     expect(res.statusCode, res.body).toBe(200);
     return CheckoutResponseSchema.parse(res.json());
   };
@@ -208,6 +214,8 @@ describe('billing', () => {
       expect(returnUrl).toBe(
         `http://localhost:5173/billing/return?paymentId=${paymentId}&client=web`,
       );
+      const stored = await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } });
+      expect(stored.autoRenewConsentText).toBe(CONSENT);
       const [sent] = provider.created;
       expect(sent).toMatchObject({
         amountKopecks: 199_000,

@@ -858,9 +858,19 @@ describe('billing endpoints', () => {
     );
     const { api, store } = setup();
     const result = await store.dispatch(
-      api.endpoints.checkout.initiate({ plan: 'year', client: 'mobile', autoRenew: true }),
+      api.endpoints.checkout.initiate({
+        plan: 'year',
+        client: 'mobile',
+        autoRenew: true,
+        consentText: 'Я согласен',
+      }),
     );
-    expect(body).toEqual({ plan: 'year', client: 'mobile', autoRenew: true });
+    expect(body).toEqual({
+      plan: 'year',
+      client: 'mobile',
+      autoRenew: true,
+      consentText: 'Я согласен',
+    });
     expect(result.data?.confirmationUrl).toBe('https://yoomoney.ru/pay/abc');
   });
 

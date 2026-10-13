@@ -126,18 +126,33 @@ describe('the offer', () => {
     expect(await screen.findByRole('radio', { name: /Год\. 1990 ₽ в год/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /Месяц\. 299 ₽ в месяц/ })).toBeOnTheScreen();
     expect(screen.getByText('166 ₽ в месяц')).toBeOnTheScreen();
-    expect(screen.getByText(/раз в год/)).toBeOnTheScreen();
+    expect(screen.getByText(/продлевается раз в год/)).toBeOnTheScreen();
     expect(screen.getByLabelText(/Повтор ошибок: Бесплатно —, Премиум ✓/)).toBeOnTheScreen();
   });
 
   it('starts a payment for the plan and the consent the learner chose', async () => {
     await openPremium();
     fireEvent.press(await screen.findByRole('radio', { name: /Месяц/ }));
-    expect(screen.getByRole('checkbox', { name: 'Продлевать автоматически' })).not.toBeChecked();
-    fireEvent.press(screen.getByRole('checkbox', { name: 'Продлевать автоматически' }));
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'Я согласен на автоматические списания согласно условиям оферты',
+      }),
+    ).not.toBeChecked();
+    fireEvent.press(
+      screen.getByRole('checkbox', {
+        name: 'Я согласен на автоматические списания согласно условиям оферты',
+      }),
+    );
     await press('Оформить Премиум');
     await screen.findByTestId('webview');
-    expect(checkoutBodies).toEqual([{ plan: 'month', client: 'mobile', autoRenew: true }]);
+    expect(checkoutBodies).toEqual([
+      {
+        plan: 'month',
+        client: 'mobile',
+        autoRenew: true,
+        consentText: 'Я согласен на автоматические списания согласно условиям оферты',
+      },
+    ]);
   });
 
   it('says so when the shop is not set up', async () => {

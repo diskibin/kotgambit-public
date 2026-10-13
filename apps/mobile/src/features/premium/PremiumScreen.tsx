@@ -110,10 +110,18 @@ function Offer({
 
   const list = plans.data?.plans ?? [];
   const canAutoRenew = plans.data?.autoRenew === true;
+  // What the learner read is what is kept; the tags only mark the link
+  const consentText = t('premium.offer.autoRenew').replace(/<\/?offer>/g, '');
 
   async function start() {
     track('checkout_start');
-    const result = await checkout({ plan, client: 'mobile', autoRenew: canAutoRenew && autoRenew });
+    const agreed = canAutoRenew && autoRenew;
+    const result = await checkout({
+      plan,
+      client: 'mobile',
+      autoRenew: agreed,
+      ...(agreed ? { consentText } : {}),
+    });
     if ('data' in result && result.data) onCheckout(result.data);
   }
 
@@ -191,32 +199,42 @@ function Offer({
       </View>
 
       {canAutoRenew && (
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: autoRenew }}
-          accessibilityLabel={t('premium.offer.autoRenew')}
-          onPress={() => setAutoRenew(!autoRenew)}
-          style={{
-            minHeight: size.tapMin,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: space[3],
-          }}
-        >
-          <View
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
-              borderWidth: shashka.border,
-              borderColor: colors.edge,
-              backgroundColor: autoRenew ? colors.brand : colors.surface,
-            }}
-          />
-          <Text style={[typography.button, { color: colors.text }]}>
-            {t('premium.offer.autoRenew')}
+        <View style={{ gap: space[1] }}>
+          {/* The words hold a link to the offer, so the box is the control and the words stay a text */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: autoRenew }}
+              accessibilityLabel={consentText}
+              onPress={() => setAutoRenew(!autoRenew)}
+              style={{
+                width: size.tapMin,
+                height: size.tapMin,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  borderWidth: shashka.border,
+                  borderColor: colors.edge,
+                  backgroundColor: autoRenew ? colors.brand : colors.surface,
+                }}
+              />
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <TermsText i18nKey="premium.offer.autoRenew" style={{ color: colors.text }} />
+            </View>
+          </View>
+          <Text style={[typography.small, { color: colors.text2 }]}>
+            {t(`premium.offer.autoRenewInfo.${plan}`, {
+              price: list.find((item) => item.key === plan)?.priceRub,
+            })}
           </Text>
-        </Pressable>
+        </View>
       )}
       <TermsText i18nKey="premium.offer.terms" />
 

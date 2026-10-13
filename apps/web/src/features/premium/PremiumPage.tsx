@@ -81,7 +81,14 @@ function Offer({ expired }: { expired: boolean }) {
 
   async function start() {
     track('checkout_start');
-    const result = await checkout({ plan, client: 'web', autoRenew: canAutoRenew && autoRenew });
+    const agreed = canAutoRenew && autoRenew;
+    const result = await checkout({
+      plan,
+      client: 'web',
+      autoRenew: agreed,
+      // What the learner read is what is kept; the tags only mark the link
+      ...(agreed ? { consentText: t('premium.offer.autoRenew').replace(/<\/?offer>/g, '') } : {}),
+    });
     if ('data' in result && result.data) {
       rememberCheckout(result.data.paymentId, result.data.confirmationUrl);
       redirect(result.data.confirmationUrl);
@@ -142,15 +149,37 @@ function Offer({ expired }: { expired: boolean }) {
         </div>
 
         {canAutoRenew && (
-          <label className="flex min-h-11 items-center gap-3 text-[16px] font-bold">
-            <input
-              type="checkbox"
-              className="size-5"
-              checked={autoRenew}
-              onChange={(event) => setAutoRenew(event.target.checked)}
-            />
-            {t('premium.offer.autoRenew')}
-          </label>
+          <div className="flex flex-col gap-1">
+            <div className="flex min-h-11 items-center gap-3 text-[16px] font-bold">
+              <input
+                id="auto-renew"
+                type="checkbox"
+                className="size-5"
+                checked={autoRenew}
+                onChange={(event) => setAutoRenew(event.target.checked)}
+              />
+              <label htmlFor="auto-renew">
+                <Trans
+                  i18nKey="premium.offer.autoRenew"
+                  components={{
+                    offer: (
+                      <Link
+                        to="/offer"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-extrabold text-brand-text"
+                      />
+                    ),
+                  }}
+                />
+              </label>
+            </div>
+            <p className="m-0 text-[14px] font-semibold text-text-2">
+              {t(`premium.offer.autoRenewInfo.${plan}`, {
+                price: (plan === 'year' ? yearly : monthly)?.priceRub,
+              })}
+            </p>
+          </div>
         )}
         <p className="m-0 text-[14px] font-semibold text-text-2">
           <Trans

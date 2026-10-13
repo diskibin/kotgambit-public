@@ -433,6 +433,8 @@ model Payment {
   client            String
   // The learner ticked "Продлевать автоматически" for this payment
   autoRenewConsent  Boolean        @default(false) @map("auto_renew_consent")
+  // The words of the checkbox the learner saw: with `createdAt` it is the history of the agreement
+  autoRenewConsentText String?     @map("auto_renew_consent_text")
   // Set once this payment has moved the subscription, so that a repeated notification does nothing
   appliedAt         DateTime?      @map("applied_at")
   paidAt            DateTime?      @map("paid_at")

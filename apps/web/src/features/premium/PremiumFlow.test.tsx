@@ -94,14 +94,16 @@ describe('the offer', () => {
     renderApp('/premium');
     await screen.findByRole('heading', { name: 'Учись без ограничений' });
     await user.click(await screen.findByRole('radio', { name: /Месяц/ }));
-    expect(screen.getByText(/раз в месяц/)).toBeInTheDocument();
+    expect(screen.getByText(/продлевается раз в месяц/)).toBeInTheDocument();
   });
 
   it('starts a payment for the chosen plan, without renewal unless the learner agrees, and goes to the provider', async () => {
     const user = userEvent.setup();
     renderApp('/premium');
     await screen.findByRole('heading', { name: 'Учись без ограничений' });
-    const renew = await screen.findByRole('checkbox', { name: 'Продлевать автоматически' });
+    const renew = await screen.findByRole('checkbox', {
+      name: 'Я согласен на автоматические списания согласно условиям оферты',
+    });
     expect(renew).not.toBeChecked();
 
     await user.click(screen.getByRole('button', { name: 'Оформить Премиум' }));
@@ -112,7 +114,12 @@ describe('the offer', () => {
     await user.click(renew);
     await user.click(screen.getByRole('button', { name: 'Оформить Премиум' }));
     await waitFor(() => expect(checkoutBodies).toHaveLength(2));
-    expect(checkoutBodies[1]).toEqual({ plan: 'month', client: 'web', autoRenew: true });
+    expect(checkoutBodies[1]).toEqual({
+      plan: 'month',
+      client: 'web',
+      autoRenew: true,
+      consentText: 'Я согласен на автоматические списания согласно условиям оферты',
+    });
   });
 
   it('does not offer the automatic renewal while the provider cannot keep a card', async () => {
@@ -121,7 +128,11 @@ describe('the offer', () => {
     );
     renderApp('/premium');
     await screen.findByRole('button', { name: 'Оформить Премиум' });
-    expect(screen.queryByRole('checkbox', { name: 'Продлевать автоматически' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', {
+        name: 'Я согласен на автоматические списания согласно условиям оферты',
+      }),
+    ).toBeNull();
   });
 
   it('says so when the shop is not set up', async () => {

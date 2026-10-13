@@ -15,6 +15,7 @@ const TIMEOUT_MS = 10_000;
 const KOPECKS_IN_RUBLE = 100;
 // "Description" of the payment form: up to 100 characters
 const MAX_DESCRIPTION = 100;
+const MAX_RECEIPT_NAME = 128;
 // The number of an invoice is a whole number from 1 to 9223372036854775807, ours fit in 2^53
 const INVOICE_SPREAD = 100;
 
@@ -59,8 +60,9 @@ export class RobokassaProvider implements PaymentProvider {
     const id = this.invoiceId();
     const outSum = formatAmount(input.amountKopecks);
     const description = input.description.slice(0, MAX_DESCRIPTION);
+    const receipt = buildReceipt(input.description, outSum);
     if (input.paymentMethodId) {
-      await this.charge(id, input.paymentMethodId, outSum, description);
+      await this.charge(id, input.paymentMethodId, outSum, description, receipt);
       return {
         id: String(id),
         status: 'pending',
@@ -78,6 +80,7 @@ export class RobokassaProvider implements PaymentProvider {
       InvId: String(id),
       Description: description,
       Culture: 'ru',
+      Receipt: receipt,
       ...(input.customerEmail ? { Email: input.customerEmail } : {}),
       ...(save ? { Recurring: 'true' } : {}),
       ...(input.returnUrl
@@ -89,10 +92,17 @@ export class RobokassaProvider implements PaymentProvider {
           }
         : {}),
     });
-    // The order of the documentation: login, sum, invoice, the addresses, the password
+    // The order of the documentation: login, sum, invoice, receipt, the addresses, the password
     params.set(
       'SignatureValue',
-      this.sign([this.settings.login, outSum, String(id), ...back, this.settings.password1]),
+      this.sign([
+        this.settings.login,
+        outSum,
+        String(id),
+        encodeReceipt(receipt),
+        ...back,
+        this.settings.password1,
+      ]),
     );
     return {
       id: String(id),
@@ -104,15 +114,30 @@ export class RobokassaProvider implements PaymentProvider {
   }
 
   /** A child payment: Robokassa charges the card of the first one without the learner. */
-  private async charge(id: number, parentId: string, outSum: string, description: string) {
+  private async charge(
+    id: number,
+    parentId: string,
+    outSum: string,
+    description: string,
+    receipt: string,
+  ) {
     const body = new URLSearchParams({
       MerchantLogin: this.settings.login,
       InvoiceID: String(id),
       PreviousInvoiceID: parentId,
       Description: description,
       OutSum: outSum,
-      // `PreviousInvoiceID` is not in the signature
-      SignatureValue: this.sign([this.settings.login, outSum, String(id), this.settings.password1]),
+      // Robokassa wants a receipt for the repeat charges too (self-employed receipts come from it)
+      Receipt: receipt,
+      // `PreviousInvoiceID` is not in the signature. The place of the receipt is not given for this
+      // request and is taken from the form of the first payment: unverified against a live shop.
+      SignatureValue: this.sign([
+        this.settings.login,
+        outSum,
+        String(id),
+        encodeReceipt(receipt),
+        this.settings.password1,
+      ]),
     });
     let response: Response;
     try {
@@ -198,6 +223,30 @@ export class RobokassaProvider implements PaymentProvider {
   private sign(parts: string[]): string {
     return createHash(this.settings.hash).update(parts.join(':')).digest('hex');
   }
+}
+
+/** One item, a service without VAT: what a self-employed seller sells. The name is limited to 128 characters. */
+function buildReceipt(name: string, outSum: string): string {
+  return JSON.stringify({
+    items: [
+      {
+        name: name.slice(0, MAX_RECEIPT_NAME),
+        quantity: 1,
+        sum: Number(outSum),
+        payment_method: 'full_payment',
+        payment_object: 'service',
+        tax: 'none',
+      },
+    ],
+  });
+}
+
+/**
+ * The receipt goes into the signature url-encoded, and the form sends it url-encoded once more by itself.
+ * `URLSearchParams` encodes like the form does, so the signed text is what travels on the wire.
+ */
+function encodeReceipt(receipt: string): string {
+  return new URLSearchParams({ r: receipt }).toString().slice(2);
 }
 
 function asRecord(value: unknown): Record<string, string> {

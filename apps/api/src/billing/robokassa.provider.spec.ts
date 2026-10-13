@@ -12,6 +12,23 @@ const SETTINGS: RobokassaSettings = {
 };
 const md5 = (text: string) => createHash('md5').update(text).digest('hex');
 
+// The receipt of INPUT as it is signed: url-encoded JSON of one service item without VAT
+const receiptJson = (sum: number) =>
+  JSON.stringify({
+    items: [
+      {
+        name: 'Кот Гамбит, Премиум на месяц',
+        quantity: 1,
+        sum,
+        payment_method: 'full_payment',
+        payment_object: 'service',
+        tax: 'none',
+      },
+    ],
+  });
+const signedReceipt = (sum: number) =>
+  new URLSearchParams({ r: receiptJson(sum) }).toString().slice(2);
+
 const text = (body: string, status = 200) => new Response(body, { status });
 const state = (result: number, code?: number) =>
   `<OperationStateResponse xmlns="http://merchant.roboxchange.com/WebService/"><Result><Code>${result}</Code></Result>${
@@ -55,10 +72,11 @@ describe('RobokassaProvider', () => {
       expect(url.searchParams.get('SuccessUrl2')).toBe(INPUT.returnUrl);
       expect(url.searchParams.get('FailUrl2Method')).toBe('GET');
       expect(url.searchParams.get('Recurring')).toBeNull();
-      // login:sum:invoice:the addresses with their methods:password 1
+      expect(url.searchParams.get('Receipt')).toBe(receiptJson(299));
+      // login:sum:invoice:receipt:the addresses with their methods:password 1
       expect(url.searchParams.get('SignatureValue')).toBe(
         md5(
-          `kotgambit:299.00:1700000000042:${INPUT.returnUrl}:GET:${INPUT.returnUrl}:GET:pass-one`,
+          `kotgambit:299.00:1700000000042:${signedReceipt(299)}:${INPUT.returnUrl}:GET:${INPUT.returnUrl}:GET:pass-one`,
         ),
       );
       expect(fetchMock).not.toHaveBeenCalled();
@@ -73,7 +91,7 @@ describe('RobokassaProvider', () => {
       );
       expect(url.searchParams.get('SuccessUrl2')).toBeNull();
       expect(url.searchParams.get('SignatureValue')).toBe(
-        md5('kotgambit:299.00:1700000000042:pass-one'),
+        md5(`kotgambit:299.00:1700000000042:${signedReceipt(299)}:pass-one`),
       );
     });
 
@@ -95,7 +113,9 @@ describe('RobokassaProvider', () => {
         (await robokassa.create(input as typeof INPUT)).confirmationUrl as string,
       );
       expect(url.searchParams.get('SignatureValue')).toBe(
-        createHash('sha256').update('kotgambit:299.00:1700000000042:pass-one').digest('hex'),
+        createHash('sha256')
+          .update(`kotgambit:299.00:1700000000042:${signedReceipt(299)}:pass-one`)
+          .digest('hex'),
       );
     });
 
@@ -129,7 +149,10 @@ describe('RobokassaProvider', () => {
       expect(body.get('PreviousInvoiceID')).toBe('1699999999999');
       expect(body.get('InvoiceID')).toBe('1700000000042');
       expect(body.get('OutSum')).toBe('299.00');
-      expect(body.get('SignatureValue')).toBe(md5('kotgambit:299.00:1700000000042:pass-one'));
+      expect(body.get('Receipt')).toBe(receiptJson(299));
+      expect(body.get('SignatureValue')).toBe(
+        md5(`kotgambit:299.00:1700000000042:${signedReceipt(299)}:pass-one`),
+      );
     });
 
     it('is a failure when Robokassa does not say OK', async () => {

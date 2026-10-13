@@ -32,13 +32,20 @@ export const SubscriptionViewSchema = z.object({
 });
 export type SubscriptionView = z.infer<typeof SubscriptionViewSchema>;
 
-export const CheckoutRequestSchema = z.object({
-  plan: PlanKeySchema,
-  /** Decides nothing about the payment, only which return page the learner is sent back to. */
-  client: z.enum(['web', 'mobile']),
-  /** The learner agreed to the automatic renewal. Without it the payment is paid once and not kept. */
-  autoRenew: z.boolean(),
-});
+export const CheckoutRequestSchema = z
+  .object({
+    plan: PlanKeySchema,
+    /** Decides nothing about the payment, only which return page the learner is sent back to. */
+    client: z.enum(['web', 'mobile']),
+    /** The learner agreed to the automatic renewal. Without it the payment is paid once and not kept. */
+    autoRenew: z.boolean(),
+    /** The words of the checkbox as the learner saw them, kept with the payment as the record of the agreement. */
+    consentText: z.string().min(1).max(500).optional(),
+  })
+  .refine((request) => !request.autoRenew || request.consentText !== undefined, {
+    message: 'consentText is required with autoRenew',
+    path: ['consentText'],
+  });
 export type CheckoutRequest = z.infer<typeof CheckoutRequestSchema>;
 
 export const CheckoutResponseSchema = z.object({
