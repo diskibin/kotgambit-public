@@ -1,4 +1,8 @@
 import './src/shared/i18n';
+import { setAnalyticsEnabled } from './src/features/analytics/tracker';
+
+// A request that nobody expects fails a test; the tests of the counting itself turn it on
+setAnalyticsEnabled(false);
 
 jest.mock(
   'react-native-safe-area-context',

@@ -68,6 +68,7 @@ export const {
   usePlansQuery,
   useResumeSubscriptionMutation,
   useSubscriptionQuery,
+  useTrackEventMutation,
   useAnswerCardMutation,
   useCardSummaryQuery,
   useMakeCardsMutation,

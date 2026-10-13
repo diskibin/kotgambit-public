@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { useTrack } from '../analytics/useTrack';
 import { Button } from '../../shared/ui/Button';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, space, typography } from '../../theme/theme';
@@ -19,6 +21,12 @@ interface PremiumNudgeProps {
 export function PremiumNudge({ kind, onPremium, compact = false }: PremiumNudgeProps) {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
+  const track = useTrack();
+
+  useEffect(() => {
+    track('nudge_view', { oncePerLaunch: true, detail: `${kind}-limit` });
+  }, [track, kind]);
+
   return (
     <View
       style={{
@@ -46,7 +54,14 @@ export function PremiumNudge({ kind, onPremium, compact = false }: PremiumNudgeP
       <Text style={[typography.body, { color: colors.text2, textAlign: 'center' }]}>
         {t(`limits.${kind}.text`)}
       </Text>
-      <Button variant="premium" label={t('limits.cta')} onPress={onPremium} />
+      <Button
+        variant="premium"
+        label={t('limits.cta')}
+        onPress={() => {
+          track('nudge_click', { detail: `${kind}-limit` });
+          onPremium();
+        }}
+      />
     </View>
   );
 }

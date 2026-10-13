@@ -1,6 +1,6 @@
 import type { CheckoutResponse, PlanKeyValue, SubscriptionView } from '@kotgambit/contracts';
 import { formatDay } from '@kotgambit/game-player';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { Button } from '../../shared/ui/Button';
 import { TermsText } from '../../shared/ui/TermsText';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radius, screenPadding, shashka, size, space, typography } from '../../theme/theme';
+import { useTrack } from '../analytics/useTrack';
 import { Mascot } from '../mascot/Mascot';
 
 const MONTHS_IN_YEAR = 12;
@@ -45,6 +46,11 @@ export function PremiumScreen({ onBack, onCheckout }: PremiumScreenProps) {
   const insets = useSafeAreaInsets();
   const subscription = useSubscriptionQuery();
   const data = subscription.data;
+  const track = useTrack();
+
+  useEffect(() => {
+    track('premium_view', { oncePerLaunch: true });
+  }, [track]);
 
   return (
     <ScrollView
@@ -98,6 +104,7 @@ function Offer({
   const { colors } = useTheme();
   const plans = usePlansQuery();
   const [checkout, order] = useCheckoutMutation();
+  const track = useTrack();
   const [plan, setPlan] = useState<PlanKeyValue>('year');
   const [autoRenew, setAutoRenew] = useState(false);
 
@@ -105,6 +112,7 @@ function Offer({
   const canAutoRenew = plans.data?.autoRenew === true;
 
   async function start() {
+    track('checkout_start');
     const result = await checkout({ plan, client: 'mobile', autoRenew: canAutoRenew && autoRenew });
     if ('data' in result && result.data) onCheckout(result.data);
   }

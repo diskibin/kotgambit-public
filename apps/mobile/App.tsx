@@ -9,6 +9,7 @@ import { store as appStore, type AppStore } from './src/app/store';
 import { AuthScreen } from './src/features/auth/AuthScreen';
 import { VerifyEmailReminder } from './src/features/auth/VerifyEmailReminder';
 import { RecoverScreen } from './src/features/auth/RecoverScreen';
+import { AppAnalytics } from './src/features/analytics/AppAnalytics';
 import { SplashScreen } from './src/features/auth/SplashScreen';
 import { CompleteScreen } from './src/features/lessons/CompleteScreen';
 import { LessonScreen, type LessonResult } from './src/features/lessons/LessonScreen';
@@ -302,6 +303,7 @@ function Root() {
     <>
       <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
       <ApplyOnboarding />
+      <AppAnalytics />
       {status === 'unknown' && isLoading ? (
         <SplashScreen />
       ) : status === 'authenticated' ? (
