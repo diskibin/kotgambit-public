@@ -393,6 +393,8 @@ model Subscription {
   // The saved payment method of the provider (for Robokassa the number of the first invoice), charged again at the end of the period
   paymentMethodId  String?            @map("payment_method_id")
   cardLast4        String?            @map("card_last4") @db.Char(4)
+  // The period end the letter about the coming charge was sent for, so that it goes once per period
+  renewalNoticeFor DateTime?          @map("renewal_notice_for")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 

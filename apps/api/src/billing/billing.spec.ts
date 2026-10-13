@@ -302,6 +302,7 @@ describe('billing', () => {
         plan: 'month',
         client: 'web',
         autoRenew: true,
+        consentText: CONSENT,
       });
       expect(res.statusCode).toBe(503);
       expect(errorCode(res.json())).toBe('server.unavailable');
@@ -432,6 +433,29 @@ describe('billing', () => {
       await prisma.subscription.update({ where: { userId }, data: { currentPeriodEnd: end } });
       return end;
     }
+
+    it('warns about the coming charge once per period, with its date and sum, and charges nothing yet', async () => {
+      const { paymentId } = await checkout('month', true);
+      provider.pay(await providerIdOf(paymentId), true);
+      await status(paymentId);
+      await prisma.subscription.update({
+        where: { userId },
+        data: { currentPeriodEnd: new Date(Date.now() + 5 * MS_IN_DAY) },
+      });
+      mail.clear();
+      provider.created.length = 0;
+
+      await billing.runScheduled(new Date());
+      await billing.runScheduled(new Date());
+
+      const notices = mail.outbox.filter(
+        (message) => message.subject === 'Скоро продление Премиума',
+      );
+      expect(notices).toHaveLength(1);
+      expect(notices[0]?.to).toBe('cat@example.com');
+      expect(notices[0]?.text).toMatch(/спишется \d+ ₽/);
+      expect(provider.created).toHaveLength(0);
+    });
 
     it('charges the saved card once per period and extends the period when it goes through', async () => {
       const end = await subscribedEndingSoon();

@@ -42,6 +42,23 @@ export class MailService {
     });
   }
 
+  /** A notice the payment service asks for: the charge, its date and its sum, sent before the money goes. */
+  sendRenewalNotice(
+    to: string,
+    options: { planTitle: string; chargeDate: string; amountRub: number; premiumUrl: string },
+  ): Promise<void> {
+    return this.transport.send({
+      to,
+      subject: 'Скоро продление Премиума',
+      text: [
+        'Привет! Это Гамбит.',
+        `Подписка «Премиум» ${options.planTitle} продлится автоматически. ${options.chargeDate} с твоей карты спишется ${options.amountRub} ₽.`,
+        `Если не хочешь продлевать, отключи автопродление на странице «Премиум»: ${options.premiumUrl}`,
+        'Доступ сохранится до конца оплаченного периода.',
+      ].join('\n\n'),
+    });
+  }
+
   sendPasswordReset(to: string, link: string): Promise<void> {
     return this.transport.send({
       to,

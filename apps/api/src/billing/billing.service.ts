@@ -21,6 +21,7 @@ import type {
   Payment as PaymentRow,
   Subscription as SubscriptionRow,
 } from '../generated/prisma/client.js';
+import { MailService } from '../mail/mail.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   PAYMENT_PROVIDER,
@@ -41,6 +42,8 @@ const MS_IN_MINUTE = 60 * 1000;
 const MS_IN_DAY = 24 * 60 * MS_IN_MINUTE;
 // The renewal is charged this long before the period ends, so that a failed charge can be retried in time
 const RENEW_AHEAD_MS = MS_IN_DAY;
+// The learner is told about the coming charge this long before the paid period ends
+const NOTICE_AHEAD_MS = 7 * MS_IN_DAY;
 // A payment still pending after this long is asked about again, in case the notification was lost
 const SYNC_AFTER_MS = 2 * MS_IN_MINUTE;
 
@@ -72,6 +75,7 @@ export class BillingService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly prisma: PrismaService,
     @Inject(CONFIG) private readonly config: AppConfig,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider | null,
+    private readonly mail: MailService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -212,6 +216,7 @@ export class BillingService implements OnApplicationBootstrap, OnModuleDestroy {
   async runScheduled(now: Date): Promise<void> {
     if (!this.provider) return;
     await this.syncPending(now);
+    await this.noticeDue(now);
     await this.renewDue(now);
     await this.expireEnded(now);
   }
@@ -228,6 +233,55 @@ export class BillingService implements OnApplicationBootstrap, OnModuleDestroy {
       await this.sync(payment).catch((error: unknown) =>
         this.logger.warn(error instanceof Error ? error.message : 'Payment could not be checked'),
       );
+    }
+  }
+
+  /**
+   * The payment service asks to warn before an automatic charge, and the offer promises it. The letter
+   * names the date and the sum, so a changed price is known before the money goes. Once per period.
+   */
+  private async noticeDue(now: Date): Promise<void> {
+    const billing = this.config.billing;
+    if (!billing) return;
+    const due = await this.prisma.subscription.findMany({
+      where: {
+        status: 'active',
+        autoRenew: true,
+        paymentMethodId: { not: null },
+        // Inside the last day the charge itself is already going out
+        currentPeriodEnd: {
+          gt: new Date(now.getTime() + RENEW_AHEAD_MS),
+          lte: new Date(now.getTime() + NOTICE_AHEAD_MS),
+        },
+      },
+    });
+    for (const row of due) {
+      if (row.renewalNoticeFor?.getTime() === row.currentPeriodEnd.getTime()) continue;
+      const email = await this.emailOf(row.userId);
+      if (!email) continue;
+      const plan = row.planKey as PlanKey;
+      const chargeAt = new Date(row.currentPeriodEnd.getTime() - RENEW_AHEAD_MS);
+      try {
+        await this.mail.sendRenewalNotice(email, {
+          planTitle: PLAN_TITLES[plan],
+          chargeDate: new Intl.DateTimeFormat('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            timeZone: 'Europe/Moscow',
+          }).format(chargeAt),
+          amountRub: billing.prices[plan],
+          premiumUrl: `${this.config.webUrl}/premium`,
+        });
+        // Only after the letter has gone, so that a failure is tried again at the next pass
+        await this.prisma.subscription.update({
+          where: { userId: row.userId },
+          data: { renewalNoticeFor: row.currentPeriodEnd },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `A renewal notice to ${row.userId} was not sent: ${error instanceof Error ? error.message : 'error'}`,
+        );
+      }
     }
   }
 
