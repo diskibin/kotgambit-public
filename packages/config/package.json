@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@eslint/js": "^10.0.0",
-    "eslint": "^10.11.0",
-    "typescript-eslint": "^8.0.0"
+    "eslint": "^10.13.0",
+    "typescript-eslint": "^8.72.0"
   },
   "devDependencies": {
     "typescript": "~6.0.0"
