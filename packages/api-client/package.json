@@ -17,16 +17,16 @@
   },
   "dependencies": {
     "@kotgambit/contracts": "workspace:*",
-    "@reduxjs/toolkit": "^2.13.0",
+    "@reduxjs/toolkit": "^2.14.0",
     "@standard-schema/spec": "^1.1.0",
     "async-mutex": "^0.5.0"
   },
   "devDependencies": {
     "@kotgambit/config": "workspace:*",
     "@types/node": "24",
-    "eslint": "^10.11.0",
-    "msw": "^3.0.1",
+    "eslint": "^10.14.0",
+    "msw": "^3.0.4",
     "typescript": "~6.0.0",
-    "vitest": "^5.0.3"
+    "vitest": "^5.1.0"
   }
 }
